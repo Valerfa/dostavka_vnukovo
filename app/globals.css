@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Inter', Arial, Helvetica, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -49,7 +49,8 @@
 }
 
 body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
 }
 
 :root {
@@ -130,13 +131,20 @@ body {
   }
   html {
     @apply font-sans;
+    letter-spacing: 0;
   }
+}
+
+.mobile-app {
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  letter-spacing: 0;
 }
 
 .mobile-app button,
 .mobile-app button *,
 .mobile-app input {
   font-weight: 400;
+  letter-spacing: 0;
 }
 
 @keyframes mobile-soft-overlay-in {

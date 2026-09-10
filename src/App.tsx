@@ -460,7 +460,7 @@ export default function Home() {
         </header>
 
         <section className="px-4 pt-5">
-          <h1 className="text-2xl font-semibold tracking-tight">Акции</h1>
+          <h1 className="text-2xl font-semibold">Акции</h1>
           <div className="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
             {promos.map((promo) => (
               <button
@@ -523,7 +523,7 @@ export default function Home() {
               }}
               className="scroll-mt-[124px]"
             >
-              <h2 className="mb-3 text-xl font-semibold tracking-tight">
+              <h2 className="mb-3 text-xl font-semibold">
                 {category}
               </h2>
               <div className="grid grid-cols-2 gap-3">
@@ -591,7 +591,7 @@ export default function Home() {
               className="object-cover opacity-50 mix-blend-multiply"
             />
           </div>
-          <h2 className="mt-5 text-2xl font-semibold tracking-tight">
+          <h2 className="mt-5 text-2xl font-semibold">
             {selectedPromo.title}
           </h2>
           <p className="mt-2 text-base leading-6 text-[#62594f]">
