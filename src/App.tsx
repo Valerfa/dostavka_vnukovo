@@ -145,6 +145,7 @@ const money = new Intl.NumberFormat('ru-RU', {
 
 const availableAreaWords = ['внуково', 'пыхтино', 'рассказовка', 'солнцево'];
 const defaultMapCenter: [number, number] = [55.6119, 37.2967];
+const motionDurationMs = 220;
 const yandexMapsApiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY;
 
 declare global {
@@ -218,7 +219,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Сеты');
   const [cartCount, setCartCount] = useState(0);
-  const [sheetTouchStart, setSheetTouchStart] = useState<number | null>(null);
 
   const filteredDishes = useMemo(() => {
     return dishes.filter((dish) => dish.category === selectedCategory);
@@ -238,13 +238,6 @@ export default function Home() {
       );
     });
   }, [searchQuery]);
-
-  const closeSheetBySwipe = (endY: number, close: () => void) => {
-    if (sheetTouchStart !== null && endY - sheetTouchStart > 70) {
-      close();
-    }
-    setSheetTouchStart(null);
-  };
 
   const confirmAddress = () => {
     const normalized = draftAddress.toLowerCase();
@@ -279,10 +272,10 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8f5ef] text-[#171512]">
+    <main className="mobile-app min-h-screen bg-[#f8f5ef] text-[#171512]">
       <div
         className={`mx-auto min-h-screen w-full max-w-[430px] bg-[#fffdf9] pb-28 transition duration-200 ${
-          addressPromptOpen ? 'blur-[3px]' : ''
+          addressPromptOpen || deliveryDeniedOpen ? 'blur-[3px]' : ''
         }`}
       >
         <header className="sticky top-0 z-20 border-b border-[#eee5d8] bg-[#fffdf9]/92 px-4 pb-3 pt-4 backdrop-blur">
@@ -329,7 +322,7 @@ export default function Home() {
             <Button
               size="icon"
               variant="secondary"
-              className="h-12 w-12 shrink-0 rounded-[8px] bg-[#171512] text-white hover:bg-[#302c25]"
+              className="h-12 w-12 shrink-0 rounded-[8px] bg-[#171512] font-normal text-white hover:bg-[#302c25]"
               onClick={() => setSearchOpen(true)}
               aria-label="Поиск"
             >
@@ -338,7 +331,7 @@ export default function Home() {
             {categories.map((category) => (
               <button
                 key={category}
-                className={`h-12 shrink-0 rounded-[8px] px-4 text-sm font-medium transition ${
+                className={`h-12 shrink-0 rounded-[8px] px-4 text-sm font-normal transition ${
                   selectedCategory === category
                     ? 'bg-[#e34d2f] text-white'
                     : 'bg-[#f1eadf] text-[#62594f]'
@@ -364,7 +357,7 @@ export default function Home() {
 
       {cartCount > 0 && !addressPromptOpen && (
         <div className="fixed inset-x-0 bottom-4 z-30 mx-auto w-full max-w-[430px] px-4">
-          <Button className="h-12 w-full rounded-[8px] bg-[#171512] text-base text-white shadow-[0_16px_40px_rgba(23,21,18,0.28)] hover:bg-[#302c25]">
+          <Button className="h-12 w-full rounded-[8px] bg-[#171512] text-base font-normal text-white shadow-[0_16px_40px_rgba(23,21,18,0.28)] hover:bg-[#302c25]">
             <ShoppingBag className="h-5 w-5" />
             Корзина · {cartCount}
             <ChevronRight className="ml-auto h-5 w-5" />
@@ -372,29 +365,36 @@ export default function Home() {
         </div>
       )}
 
-      {addressPromptOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/48 px-5">
-          <section className="w-full max-w-[360px] rounded-[16px] bg-white p-4 shadow-[0_20px_70px_rgba(0,0,0,0.28)]">
-            <h2 className="text-xl font-semibold">Ваш адрес</h2>
-            <button
-              className="mt-4 flex h-12 w-full items-center gap-3 rounded-[8px] border border-[#e4ddd1] bg-[#f8f5ef] px-3 text-left text-[#62594f]"
-              onClick={() => setMapOpen(true)}
+      <FadePresence show={addressPromptOpen}>
+        {(isLeaving) => (
+          <div
+            className={`fixed inset-0 z-40 flex items-center justify-center bg-black/48 px-5 ${
+              isLeaving ? 'mobile-soft-overlay-out' : 'mobile-soft-overlay-in'
+            }`}
+          >
+            <section
+              className={`w-full max-w-[360px] rounded-[16px] bg-white p-4 shadow-[0_20px_70px_rgba(0,0,0,0.28)] ${
+                isLeaving ? 'mobile-soft-dialog-out' : 'mobile-soft-dialog-in'
+              }`}
             >
-              <MapPin className="h-5 w-5 text-[#e34d2f]" />
-              <span className="truncate">{address || 'укажите адрес'}</span>
-            </button>
-          </section>
-        </div>
-      )}
+              <h2 className="text-xl font-semibold">Ваш адрес</h2>
+              <button
+                className="mt-4 flex h-12 w-full items-center gap-3 rounded-[8px] border border-[#e4ddd1] bg-[#f8f5ef] px-3 text-left font-normal text-[#62594f]"
+                onClick={() => {
+                  setAddressPromptOpen(false);
+                  setMapOpen(true);
+                }}
+              >
+                <MapPin className="h-5 w-5 text-[#e34d2f]" />
+                <span className="truncate">{address || 'укажите адрес'}</span>
+              </button>
+            </section>
+          </div>
+        )}
+      </FadePresence>
 
       {selectedPromo && (
-        <BottomSheet
-          onClose={() => setSelectedPromo(null)}
-          onTouchStart={(value) => setSheetTouchStart(value)}
-          onTouchEnd={(value) =>
-            closeSheetBySwipe(value, () => setSelectedPromo(null))
-          }
-        >
+        <BottomSheet onClose={() => setSelectedPromo(null)}>
           <div className="relative aspect-square overflow-hidden rounded-[18px]">
             <div
               className={`absolute inset-0 bg-gradient-to-br ${selectedPromo.color}`}
@@ -416,18 +416,14 @@ export default function Home() {
       )}
 
       {searchOpen && (
-        <BottomSheet
-          onClose={() => setSearchOpen(false)}
-          onTouchStart={(value) => setSheetTouchStart(value)}
-          onTouchEnd={(value) => closeSheetBySwipe(value, () => setSearchOpen(false))}
-        >
+        <BottomSheet onClose={() => setSearchOpen(false)}>
           <div className="flex h-12 items-center gap-2 rounded-[8px] bg-[#f1eadf] px-3">
             <Search className="h-5 w-5 text-[#8a8277]" />
             <Input
               autoFocus
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              className="h-12 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0"
+              className="h-12 border-0 bg-transparent px-0 text-base font-normal shadow-none focus-visible:ring-0"
               placeholder="Поиск по блюду или ингредиенту"
             />
           </div>
@@ -459,35 +455,48 @@ export default function Home() {
         </BottomSheet>
       )}
 
-      {deliveryDeniedOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/42 px-5">
-          <section className="w-full max-w-[360px] rounded-[16px] bg-white p-5 text-center shadow-[0_20px_70px_rgba(0,0,0,0.28)]">
-            <div className="relative mx-auto h-36 w-36">
-              <Image
-                src="/images/sad-roll.png"
-                alt="Грустная ролла"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <h2 className="mt-3 text-xl font-semibold">
-              К сожалению, доставка не доступна на ваш адрес
-            </h2>
-            <p className="mt-2 text-sm leading-5 text-[#766e63]">
-              Пока доставляем в радиусе 5 км от филиала во Внуково.
-            </p>
-            <Button
-              className="mt-5 h-12 w-full rounded-[8px] bg-[#171512] text-white hover:bg-[#302c25]"
-              onClick={() => {
-                setDeliveryDeniedOpen(false);
-                setAddressPromptOpen(true);
-              }}
+      <FadePresence show={deliveryDeniedOpen}>
+        {(isLeaving) => (
+          <div
+            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/42 px-5 ${
+              isLeaving ? 'mobile-soft-overlay-out' : 'mobile-soft-overlay-in'
+            }`}
+          >
+            <section
+              className={`w-full max-w-[360px] rounded-[16px] bg-white p-5 text-center shadow-[0_20px_70px_rgba(0,0,0,0.28)] ${
+                isLeaving ? 'mobile-soft-dialog-out' : 'mobile-soft-dialog-in'
+              }`}
             >
-              Указать другой адрес
-            </Button>
-          </section>
-        </div>
-      )}
+              <div className="relative mx-auto h-36 w-36">
+                <Image
+                  src="/images/sad-roll.png"
+                  alt="Грустная ролла"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <h2 className="mt-3 text-xl font-semibold">
+                К сожалению, доставка не доступна на ваш адрес
+              </h2>
+              <p className="mt-2 text-sm leading-5 text-[#766e63]">
+                Пока доставляем в радиусе 5 км от филиала во Внуково.
+              </p>
+              <Button
+                className="mt-5 h-12 w-full rounded-[8px] bg-[#171512] font-normal text-white hover:bg-[#302c25]"
+                onClick={() => {
+                  setDeliveryDeniedOpen(false);
+                  setTimeout(
+                    () => setAddressPromptOpen(true),
+                    motionDurationMs,
+                  );
+                }}
+              >
+                Указать другой адрес
+              </Button>
+            </section>
+          </div>
+        )}
+      </FadePresence>
     </main>
   );
 }
@@ -700,7 +709,7 @@ function YandexMapPicker({
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#e8efe5] text-[#171512]">
+    <main className="mobile-app relative min-h-screen overflow-hidden bg-[#e8efe5] text-[#171512]">
       <div
         ref={mapContainerRef}
         className="absolute inset-0"
@@ -742,7 +751,7 @@ function YandexMapPicker({
         <Button
           size="icon"
           variant="secondary"
-          className="h-12 w-12 rounded-[8px] bg-white shadow-sm"
+          className="h-12 w-12 rounded-[8px] bg-white font-normal shadow-sm"
           onClick={onBack}
           aria-label="Назад"
         >
@@ -751,7 +760,7 @@ function YandexMapPicker({
         <Button
           size="icon"
           variant="secondary"
-          className="h-12 w-12 rounded-[8px] bg-white shadow-sm"
+          className="h-12 w-12 rounded-[8px] bg-white font-normal shadow-sm"
           onClick={locateUser}
           aria-label="Определить местоположение"
         >
@@ -770,13 +779,13 @@ function YandexMapPicker({
                 searchAddressOnMap();
               }
             }}
-            className="h-12 rounded-[8px] border-[#e4ddd1] bg-[#f8f5ef] text-base"
+            className="h-12 rounded-[8px] border-[#e4ddd1] bg-[#f8f5ef] text-base font-normal"
             placeholder="Введите адрес"
           />
           <Button
             size="icon"
             variant="secondary"
-            className="h-12 w-12 shrink-0 rounded-[8px] bg-[#f1eadf]"
+            className="h-12 w-12 shrink-0 rounded-[8px] bg-[#f1eadf] font-normal"
             onClick={searchAddressOnMap}
             aria-label="Найти адрес"
           >
@@ -785,7 +794,7 @@ function YandexMapPicker({
         </div>
         {notice && <p className="mt-2 text-sm text-[#a54b35]">{notice}</p>}
         <Button
-          className="mt-3 h-12 w-full rounded-[8px] bg-[#e34d2f] text-base text-white hover:bg-[#ca4025]"
+          className="mt-3 h-12 w-full rounded-[8px] bg-[#e34d2f] text-base font-normal text-white hover:bg-[#ca4025]"
           onClick={onConfirm}
         >
           Подтвердить
@@ -824,7 +833,7 @@ function DishCard({ dish, onAdd }: { dish: Dish; onAdd: () => void }) {
           <p className="text-lg font-semibold">{money.format(dish.price)}</p>
           <Button
             size="icon"
-            className="h-12 w-12 rounded-[8px] bg-[#e34d2f] text-white hover:bg-[#ca4025]"
+            className="h-12 w-12 rounded-[8px] bg-[#e34d2f] font-normal text-white hover:bg-[#ca4025]"
             onClick={onAdd}
             aria-label={`Добавить ${dish.name}`}
           >
@@ -836,28 +845,100 @@ function DishCard({ dish, onAdd }: { dish: Dish; onAdd: () => void }) {
   );
 }
 
+function FadePresence({
+  show,
+  children,
+}: {
+  show: boolean;
+  children: (isLeaving: boolean) => React.ReactNode;
+}) {
+  const [shouldRender, setShouldRender] = useState(show);
+  const [isLeaving, setIsLeaving] = useState(false);
+
+  useEffect(() => {
+    if (show) {
+      setShouldRender(true);
+      setIsLeaving(false);
+      return undefined;
+    }
+
+    if (!shouldRender) {
+      return undefined;
+    }
+
+    setIsLeaving(true);
+    const timeoutId = setTimeout(() => {
+      setShouldRender(false);
+      setIsLeaving(false);
+    }, motionDurationMs);
+
+    return () => clearTimeout(timeoutId);
+  }, [show, shouldRender]);
+
+  if (!shouldRender) {
+    return null;
+  }
+
+  return children(isLeaving);
+}
+
 function BottomSheet({
   children,
   onClose,
-  onTouchStart,
-  onTouchEnd,
 }: {
   children: React.ReactNode;
   onClose: () => void;
-  onTouchStart: (value: number) => void;
-  onTouchEnd: (value: number) => void;
 }) {
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const requestClose = () => {
+    if (isLeaving) {
+      return;
+    }
+
+    setIsLeaving(true);
+    closeTimeoutRef.current = setTimeout(onClose, motionDurationMs);
+  };
+
+  const closeBySwipe = (endY: number) => {
+    if (touchStart !== null && endY - touchStart > 70) {
+      requestClose();
+    }
+
+    setTouchStart(null);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/42 pt-5">
+    <div
+      className={`fixed inset-0 z-50 bg-black/42 pt-5 ${
+        isLeaving
+          ? 'mobile-bottom-sheet-backdrop-out'
+          : 'mobile-bottom-sheet-backdrop-in'
+      }`}
+    >
       <section
-        className="fixed inset-x-0 bottom-0 rounded-t-[18px] bg-white px-4 pb-6 pt-3 shadow-[0_-18px_60px_rgba(0,0,0,0.22)]"
-        onTouchStart={(event) => onTouchStart(event.touches[0].clientY)}
-        onTouchEnd={(event) => onTouchEnd(event.changedTouches[0].clientY)}
+        className={`fixed inset-x-0 bottom-0 rounded-t-[18px] bg-white px-4 pb-6 pt-3 shadow-[0_-18px_60px_rgba(0,0,0,0.22)] ${
+          isLeaving
+            ? 'mobile-bottom-sheet-panel-out'
+            : 'mobile-bottom-sheet-panel-in'
+        }`}
+        onTouchStart={(event) => setTouchStart(event.touches[0].clientY)}
+        onTouchEnd={(event) => closeBySwipe(event.changedTouches[0].clientY)}
       >
         <div className="mx-auto mb-4 h-1.5 w-12 rounded-[8px] bg-[#d8d1c7]" />
         <button
-          className="absolute right-4 top-3 grid h-12 w-12 place-items-center rounded-[8px] bg-[#f1eadf]"
-          onClick={onClose}
+          className="absolute right-4 top-3 grid h-12 w-12 place-items-center rounded-[8px] bg-[#f1eadf] font-normal"
+          onClick={requestClose}
           aria-label="Закрыть"
         >
           <X className="h-4 w-4" />
