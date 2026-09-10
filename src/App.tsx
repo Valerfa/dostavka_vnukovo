@@ -54,7 +54,7 @@ type Promo = {
   color: string;
 };
 
-const categories = ['Сеты', 'Роллы', 'Суши', 'Пицца', 'Закуски'];
+const categories = ['Роллы', 'Суши', 'Сеты', 'Закуски', 'Пицца'];
 
 const dishes: Dish[] = [
   {
@@ -333,12 +333,17 @@ export default function Home() {
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Сеты');
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
   const [cartCount, setCartCount] = useState(0);
+  const categorySectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const categoryTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  const filteredDishes = useMemo(() => {
-    return dishes.filter((dish) => dish.category === selectedCategory);
-  }, [selectedCategory]);
+  const dishesByCategory = useMemo(() => {
+    return categories.map((category) => ({
+      category,
+      dishes: dishes.filter((dish) => dish.category === category),
+    }));
+  }, []);
 
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -354,6 +359,52 @@ export default function Home() {
       );
     });
   }, [searchQuery]);
+
+  useEffect(() => {
+    const updateActiveCategory = () => {
+      const activationLine = 150;
+      let activeCategory = categories[0];
+
+      for (const category of categories) {
+        const section = categorySectionRefs.current[category];
+
+        if (!section) {
+          continue;
+        }
+
+        if (section.getBoundingClientRect().top <= activationLine) {
+          activeCategory = category;
+        }
+      }
+
+      setSelectedCategory((currentCategory) => {
+        return currentCategory === activeCategory
+          ? currentCategory
+          : activeCategory;
+      });
+    };
+
+    updateActiveCategory();
+    window.addEventListener('scroll', updateActiveCategory, { passive: true });
+
+    return () => window.removeEventListener('scroll', updateActiveCategory);
+  }, []);
+
+  useEffect(() => {
+    categoryTabRefs.current[selectedCategory]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  }, [selectedCategory]);
+
+  const scrollToCategory = (category: string) => {
+    setSelectedCategory(category);
+    categorySectionRefs.current[category]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
 
   const confirmAddress = () => {
     const normalized = draftAddress.toLowerCase();
@@ -452,7 +503,10 @@ export default function Home() {
                     ? 'bg-[#e34d2f] text-white'
                     : 'bg-[#f1eadf] text-[#62594f]'
                 }`}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => scrollToCategory(category)}
+                ref={(element) => {
+                  categoryTabRefs.current[category] = element;
+                }}
               >
                 {category}
               </button>
@@ -460,15 +514,30 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="grid grid-cols-2 gap-3 px-4 pt-4">
-          {filteredDishes.map((dish) => (
-            <DishCard
-              key={dish.id}
-              dish={dish}
-              onAdd={() => setCartCount((count) => count + 1)}
-            />
+        <div className="space-y-6 px-4 pt-4">
+          {dishesByCategory.map(({ category, dishes }) => (
+            <section
+              key={category}
+              ref={(element) => {
+                categorySectionRefs.current[category] = element;
+              }}
+              className="scroll-mt-[124px]"
+            >
+              <h2 className="mb-3 text-xl font-semibold tracking-tight">
+                {category}
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {dishes.map((dish) => (
+                  <DishCard
+                    key={dish.id}
+                    dish={dish}
+                    onAdd={() => setCartCount((count) => count + 1)}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
-        </section>
+        </div>
       </div>
 
       {cartCount > 0 && !addressPromptOpen && (
@@ -549,7 +618,7 @@ export default function Home() {
                 key={dish.id}
                 className="flex w-full items-center gap-3 rounded-[12px] bg-[#fff8ef] p-3 text-left"
                 onClick={() => {
-                  setSelectedCategory(dish.category);
+                  scrollToCategory(dish.category);
                   setSearchOpen(false);
                 }}
               >
