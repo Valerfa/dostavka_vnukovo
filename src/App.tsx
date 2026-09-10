@@ -993,31 +993,36 @@ function YandexMapPicker({
 
 function DishCard({ dish, onAdd }: { dish: Dish; onAdd: () => void }) {
   return (
-    <article className="flex min-h-[286px] flex-col rounded-[12px] border border-[#E7E3DF] bg-white p-2.5 shadow-[0_2px_10px_rgba(39,32,20,0.04)]">
-      <div className="relative aspect-square w-full overflow-hidden rounded-[12px] bg-[#F7F2ED]">
+    <article className="flex h-full flex-col rounded-[22px] border border-[#E8E8E8] bg-white p-2 shadow-none">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[16px] bg-[#F1EEE9]">
         <Image
           src={dish.imageSrc}
           alt={dish.name}
           fill
-          className="object-contain p-1.5"
+          className="scale-110 object-cover"
         />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col pt-2.5">
+      <div className="flex min-w-0 flex-1 flex-col px-2 pb-2 pt-4">
         <div className="min-w-0">
-          <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-[#171512]">
+          <h2 className="line-clamp-2 min-h-10 text-base font-semibold leading-[1.22] text-[#111111] sm:min-h-[52px] sm:text-xl lg:text-[21px]">
             {dish.name}
           </h2>
-          <p className="mt-0.5 text-xs text-[#8a8277]">{dish.grams} г</p>
+          <p className="mt-2 text-sm font-medium leading-[1.3] text-[#606060] sm:text-base">
+            {dish.grams} г
+          </p>
         </div>
-        <p className="mt-1 line-clamp-2 text-xs leading-[1.4] text-[#62594f]">
+        <p className="mt-2 line-clamp-2 min-h-[34px] text-xs font-normal leading-[1.35] text-[#666666] sm:text-sm">
           {dish.ingredients}
         </p>
         <Button
-          className="mt-auto h-11 w-full rounded-[8px] bg-[#B52227] text-sm font-normal text-white hover:bg-[#991d21]"
+          className="mt-4 flex h-14 w-full items-center justify-between rounded-[16px] bg-[#F3F3F3] px-5 text-[#1A1A1A] shadow-none hover:bg-[#EDEDED]"
           onClick={onAdd}
           aria-label={`Добавить ${dish.name}`}
         >
-          Добавить · {money.format(dish.price)}
+          <span className="text-xl font-semibold sm:text-[21px]">
+            {money.format(dish.price)}
+          </span>
+          <span className="text-4xl font-light leading-none">+</span>
         </Button>
       </div>
     </article>
