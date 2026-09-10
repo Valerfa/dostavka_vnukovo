@@ -8,8 +8,45 @@
       content="Демонстрационный интерфейс доставки суши во Внуково"
     />
     <title>Sushi Vnukovo Demo</title>
+    <style>
+      html,
+      body,
+      #root {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: #f8f5ef;
+      }
+
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background-color: #f8f5ef;
+        background-image: url('/images/bg-mobile.png');
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        opacity: 1;
+        transition: opacity 260ms ease-out, visibility 260ms ease-out;
+      }
+
+      #app-loader.app-loader-hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      @media (min-width: 768px) {
+        #app-loader {
+          background-image: url('/images/bg-desktop.png');
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="app-loader" aria-hidden="true"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

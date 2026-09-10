@@ -8,3 +8,14 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
+requestAnimationFrame(() => {
+  const loader = document.getElementById('app-loader');
+
+  if (!loader) {
+    return;
+  }
+
+  loader.classList.add('app-loader-hidden');
+  window.setTimeout(() => loader.remove(), 300);
+});
