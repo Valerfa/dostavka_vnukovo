@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ChevronRight,
-  Crosshair,
+  Loader2,
   LocateFixed,
   MapPin,
-  Minus,
   Plus,
   Search,
   ShoppingBag,
@@ -145,6 +144,66 @@ const money = new Intl.NumberFormat('ru-RU', {
 });
 
 const availableAreaWords = ['внуково', 'пыхтино', 'рассказовка', 'солнцево'];
+const defaultMapCenter: [number, number] = [55.6119, 37.2967];
+const yandexMapsApiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY;
+
+declare global {
+  interface Window {
+    ymaps?: YMapsApi;
+  }
+}
+
+type YMapsApi = {
+  ready: (callback: () => void) => void;
+  Map: new (
+    element: HTMLElement,
+    options: Record<string, unknown>,
+  ) => YandexMapInstance;
+  Placemark: new (
+    coords: [number, number],
+    properties?: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => YandexPlacemark;
+  geocode: (value: string | [number, number]) => Promise<YandexGeocodeResult>;
+};
+
+type YandexMapInstance = {
+  destroy: () => void;
+  setCenter: (coords: [number, number], zoom?: number) => void;
+  geoObjects: {
+    add: (geoObject: YandexPlacemark) => void;
+  };
+  events: {
+    add: (eventName: string, callback: (event: YandexMapEvent) => void) => void;
+  };
+};
+
+type YandexPlacemark = {
+  geometry: {
+    setCoordinates: (coords: [number, number]) => void;
+    getCoordinates: () => [number, number];
+  };
+  events: {
+    add: (eventName: string, callback: () => void) => void;
+  };
+};
+
+type YandexMapEvent = {
+  get: (key: string) => [number, number];
+};
+
+type YandexGeocodeResult = {
+  geoObjects: {
+    get: (index: number) =>
+      | {
+          getAddressLine?: () => string;
+          geometry?: {
+            getCoordinates?: () => [number, number];
+          };
+        }
+      | undefined;
+  };
+};
 
 export default function Home() {
   const [address, setAddress] = useState('');
@@ -207,79 +266,15 @@ export default function Home() {
 
   if (mapOpen) {
     return (
-      <main className="relative min-h-screen overflow-hidden bg-[#e8efe5] text-[#171512]">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.55)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.55)_1px,transparent_1px)] bg-[size:42px_42px]" />
-        <div className="absolute left-[-12%] top-[18%] h-36 w-[130%] rotate-[-18deg] rounded-full bg-[#f5efe4]" />
-        <div className="absolute left-[-10%] top-[52%] h-28 w-[120%] rotate-[14deg] rounded-full bg-[#d6e6d1]" />
-        <div className="absolute left-[18%] top-[10%] h-24 w-24 rounded-[28px] bg-[#d5e6ff]" />
-        <div className="absolute bottom-[22%] right-[12%] h-28 w-28 rounded-[32px] bg-[#f7d7b5]" />
-
-        <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-11 w-11 rounded-full bg-white shadow-sm"
-            onClick={() => {
-              setMapOpen(false);
-              setAddressPromptOpen(true);
-            }}
-            aria-label="Назад"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="h-11 w-11 rounded-full bg-white shadow-sm"
-            onClick={() =>
-              setDraftAddress('Москва, Внуково, улица Летчика Грицевца, 5')
-            }
-            aria-label="Определить местоположение"
-          >
-            <LocateFixed className="h-5 w-5 text-[#e34d2f]" />
-          </Button>
-        </div>
-
-        <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-full">
-          <MapPin className="h-12 w-12 fill-[#e34d2f] text-[#e34d2f] drop-shadow-md" />
-        </div>
-        <button
-          className="absolute left-[26%] top-[38%] z-10 rounded-full bg-white px-3 py-2 text-xs font-medium shadow-sm"
-          onClick={() =>
-            setDraftAddress('Москва, Внуково, улица Авиаконструктора Петлякова, 13')
-          }
-        >
-          Авиаконструктора Петлякова
-        </button>
-        <button
-          className="absolute right-[16%] top-[55%] z-10 rounded-full bg-white px-3 py-2 text-xs font-medium shadow-sm"
-          onClick={() => setDraftAddress('Москва, Пыхтино, улица Летчика Ульянина, 7')}
-        >
-          Пыхтино
-        </button>
-        <button
-          className="absolute bottom-[33%] left-[14%] z-10 rounded-full bg-white px-3 py-2 text-xs font-medium shadow-sm"
-          onClick={() => setDraftAddress('Москва, Тверская улица, 1')}
-        >
-          Вне радиуса
-        </button>
-
-        <section className="fixed inset-x-0 bottom-0 z-20 rounded-t-[28px] bg-white px-4 pb-5 pt-4 shadow-[0_-18px_55px_rgba(23,21,18,0.18)]">
-          <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#d8d1c7]" />
-          <Input
-            value={draftAddress}
-            onChange={(event) => setDraftAddress(event.target.value)}
-            className="h-12 rounded-2xl border-[#e4ddd1] bg-[#f8f5ef] text-base"
-            placeholder="Введите адрес"
-          />
-          <Button
-            className="mt-3 h-12 w-full rounded-2xl bg-[#e34d2f] text-base text-white hover:bg-[#ca4025]"
-            onClick={confirmAddress}
-          >
-            Подтвердить
-          </Button>
-        </section>
-      </main>
+      <YandexMapPicker
+        value={draftAddress}
+        onBack={() => {
+          setMapOpen(false);
+          setAddressPromptOpen(true);
+        }}
+        onChange={setDraftAddress}
+        onConfirm={confirmAddress}
+      />
     );
   }
 
@@ -493,6 +488,309 @@ export default function Home() {
           </section>
         </div>
       )}
+    </main>
+  );
+}
+
+function YandexMapPicker({
+  value,
+  onBack,
+  onChange,
+  onConfirm,
+}: {
+  value: string;
+  onBack: () => void;
+  onChange: (value: string) => void;
+  onConfirm: () => void;
+}) {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<YandexMapInstance | null>(null);
+  const placemarkRef = useRef<YandexPlacemark | null>(null);
+  const ymapsRef = useRef<YMapsApi | null>(null);
+  const reverseGeocodeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const [status, setStatus] = useState<
+    'missing-key' | 'loading' | 'ready' | 'error'
+  >(yandexMapsApiKey ? 'loading' : 'missing-key');
+  const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    if (!yandexMapsApiKey) {
+      setStatus('missing-key');
+      return;
+    }
+
+    if (window.ymaps) {
+      window.ymaps.ready(() => setStatus('ready'));
+      return;
+    }
+
+    const scriptId = 'yandex-maps-api';
+    const existingScript = document.getElementById(scriptId);
+
+    if (existingScript) {
+      existingScript.addEventListener('load', () => {
+        window.ymaps?.ready(() => setStatus('ready'));
+      });
+      existingScript.addEventListener('error', () => setStatus('error'));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${encodeURIComponent(
+      yandexMapsApiKey,
+    )}&lang=ru_RU`;
+    script.async = true;
+    script.onload = () => window.ymaps?.ready(() => setStatus('ready'));
+    script.onerror = () => setStatus('error');
+    document.head.appendChild(script);
+  }, []);
+
+  useEffect(() => {
+    if (status !== 'ready' || !window.ymaps || !mapContainerRef.current) {
+      return;
+    }
+
+    const ymaps = window.ymaps;
+    ymapsRef.current = ymaps;
+
+    const updateAddressByCoordinates = (coords: [number, number]) => {
+      if (reverseGeocodeTimeoutRef.current) {
+        clearTimeout(reverseGeocodeTimeoutRef.current);
+      }
+
+      reverseGeocodeTimeoutRef.current = setTimeout(() => {
+        ymaps
+          .geocode(coords)
+          .then((result) => {
+            const geoObject = result.geoObjects.get(0);
+            const addressLine = geoObject?.getAddressLine?.();
+
+            if (addressLine) {
+              onChange(addressLine);
+              setNotice('');
+            }
+          })
+          .catch(() => {
+            setNotice('Не получилось определить адрес по точке на карте.');
+          });
+      }, 250);
+    };
+
+    const moveMarker = (coords: [number, number], shouldCenter = false) => {
+      placemarkRef.current?.geometry.setCoordinates(coords);
+
+      if (shouldCenter) {
+        mapRef.current?.setCenter(coords, 16);
+      }
+
+      updateAddressByCoordinates(coords);
+    };
+
+    const map = new ymaps.Map(mapContainerRef.current, {
+      center: defaultMapCenter,
+      controls: ['zoomControl'],
+      zoom: 14,
+    });
+    const placemark = new ymaps.Placemark(
+      defaultMapCenter,
+      {},
+      {
+        draggable: true,
+        preset: 'islands#redDotIcon',
+      },
+    );
+
+    map.geoObjects.add(placemark);
+    mapRef.current = map;
+    placemarkRef.current = placemark;
+
+    map.events.add('click', (event) => moveMarker(event.get('coords')));
+    placemark.events.add('dragend', () => {
+      moveMarker(placemark.geometry.getCoordinates());
+    });
+
+    if (value) {
+      ymaps
+        .geocode(value)
+        .then((result) => {
+          const coords = result.geoObjects.get(0)?.geometry?.getCoordinates?.();
+
+          if (coords) {
+            moveMarker(coords, true);
+          }
+        })
+        .catch(() => undefined);
+    }
+
+    return () => {
+      if (reverseGeocodeTimeoutRef.current) {
+        clearTimeout(reverseGeocodeTimeoutRef.current);
+      }
+
+      map.destroy();
+      mapRef.current = null;
+      placemarkRef.current = null;
+    };
+  }, [status]);
+
+  const searchAddressOnMap = () => {
+    const ymaps = ymapsRef.current;
+
+    if (!ymaps || !value.trim()) {
+      return;
+    }
+
+    ymaps
+      .geocode(value)
+      .then((result) => {
+        const coords = result.geoObjects.get(0)?.geometry?.getCoordinates?.();
+
+        if (!coords) {
+          setNotice('Не нашли такой адрес. Попробуйте уточнить улицу и дом.');
+          return;
+        }
+
+        placemarkRef.current?.geometry.setCoordinates(coords);
+        mapRef.current?.setCenter(coords, 16);
+        setNotice('');
+      })
+      .catch(() => {
+        setNotice('Не удалось найти адрес на карте.');
+      });
+  };
+
+  const locateUser = () => {
+    if (!navigator.geolocation) {
+      setNotice('Геолокация недоступна в этом браузере.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords: [number, number] = [
+          position.coords.latitude,
+          position.coords.longitude,
+        ];
+
+        placemarkRef.current?.geometry.setCoordinates(coords);
+        mapRef.current?.setCenter(coords, 16);
+        ymapsRef.current
+          ?.geocode(coords)
+          .then((result) => {
+            const addressLine = result.geoObjects.get(0)?.getAddressLine?.();
+
+            if (addressLine) {
+              onChange(addressLine);
+            }
+
+            setNotice('');
+          })
+          .catch(() => {
+            setNotice('Геолокация найдена, но адрес определить не удалось.');
+          });
+      },
+      () => {
+        setNotice('Разрешите доступ к геолокации или введите адрес вручную.');
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  };
+
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-[#e8efe5] text-[#171512]">
+      <div
+        ref={mapContainerRef}
+        className="absolute inset-0"
+        aria-label="Карта выбора адреса"
+      />
+
+      {status !== 'ready' && (
+        <div className="absolute inset-0 grid place-items-center bg-[#e8efe5] px-5 text-center">
+          <div className="rounded-[28px] bg-white p-5 shadow-[0_18px_55px_rgba(23,21,18,0.16)]">
+            {status === 'loading' && (
+              <>
+                <Loader2 className="mx-auto h-7 w-7 animate-spin text-[#e34d2f]" />
+                <p className="mt-3 font-semibold">Загружаем Яндекс Карты</p>
+              </>
+            )}
+            {status === 'missing-key' && (
+              <>
+                <MapPin className="mx-auto h-8 w-8 text-[#e34d2f]" />
+                <p className="mt-3 font-semibold">Нужен ключ Яндекс Карт</p>
+                <p className="mt-2 text-sm leading-5 text-[#766e63]">
+                  Добавьте `VITE_YANDEX_MAPS_API_KEY` в переменные окружения.
+                </p>
+              </>
+            )}
+            {status === 'error' && (
+              <>
+                <MapPin className="mx-auto h-8 w-8 text-[#e34d2f]" />
+                <p className="mt-3 font-semibold">Карта не загрузилась</p>
+                <p className="mt-2 text-sm leading-5 text-[#766e63]">
+                  Проверьте API-ключ и ограничения домена в кабинете Яндекса.
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="absolute left-4 right-4 top-4 z-10 flex items-center justify-between">
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-11 w-11 rounded-full bg-white shadow-sm"
+          onClick={onBack}
+          aria-label="Назад"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-11 w-11 rounded-full bg-white shadow-sm"
+          onClick={locateUser}
+          aria-label="Определить местоположение"
+        >
+          <LocateFixed className="h-5 w-5 text-[#e34d2f]" />
+        </Button>
+      </div>
+
+      <section className="fixed inset-x-0 bottom-0 z-20 rounded-t-[28px] bg-white px-4 pb-5 pt-4 shadow-[0_-18px_55px_rgba(23,21,18,0.18)]">
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-[#d8d1c7]" />
+        <div className="flex gap-2">
+          <Input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                searchAddressOnMap();
+              }
+            }}
+            className="h-12 rounded-2xl border-[#e4ddd1] bg-[#f8f5ef] text-base"
+            placeholder="Введите адрес"
+          />
+          <Button
+            size="icon"
+            variant="secondary"
+            className="h-12 w-12 shrink-0 rounded-2xl bg-[#f1eadf]"
+            onClick={searchAddressOnMap}
+            aria-label="Найти адрес"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+        </div>
+        {notice && <p className="mt-2 text-sm text-[#a54b35]">{notice}</p>}
+        <Button
+          className="mt-3 h-12 w-full rounded-2xl bg-[#e34d2f] text-base text-white hover:bg-[#ca4025]"
+          onClick={onConfirm}
+        >
+          Подтвердить
+        </Button>
+      </section>
     </main>
   );
 }
