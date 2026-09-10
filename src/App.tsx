@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   X,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -45,6 +44,7 @@ type Dish = {
   price: number;
   grams: number;
   color: string;
+  imageSrc: string;
 };
 
 type Promo = {
@@ -54,7 +54,7 @@ type Promo = {
   color: string;
 };
 
-const categories = ['Сеты', 'Роллы', 'Суши', 'Запеченные', 'Напитки'];
+const categories = ['Сеты', 'Роллы', 'Суши', 'Пицца', 'Закуски'];
 
 const dishes: Dish[] = [
   {
@@ -65,6 +65,27 @@ const dishes: Dish[] = [
     price: 1990,
     grams: 960,
     color: 'from-[#ff6b45] via-[#ffb15c] to-[#ffe1a8]',
+    imageSrc: '/images/set-1.png',
+  },
+  {
+    id: 'set-family',
+    name: 'Семейный сет',
+    category: 'Сеты',
+    ingredients: 'Роллы с лососем, крабом, огурцом, сыром и кунжутом',
+    price: 2390,
+    grams: 1180,
+    color: 'from-[#f97316] via-[#fdba74] to-[#fff7ed]',
+    imageSrc: '/images/set-2.png',
+  },
+  {
+    id: 'set-party',
+    name: 'Большой сет',
+    category: 'Сеты',
+    ingredients: 'Ассорти роллов, суши, имбирь, васаби и соевый соус',
+    price: 2890,
+    grams: 1420,
+    color: 'from-[#dc2626] via-[#fb923c] to-[#fef3c7]',
+    imageSrc: '/images/set-3.png',
   },
   {
     id: 'philadelphia',
@@ -74,6 +95,7 @@ const dishes: Dish[] = [
     price: 690,
     grams: 285,
     color: 'from-[#fb7185] via-[#fb923c] to-[#fed7aa]',
+    imageSrc: '/images/rolls-1.png',
   },
   {
     id: 'tokyo',
@@ -83,6 +105,47 @@ const dishes: Dish[] = [
     price: 640,
     grams: 270,
     color: 'from-[#34d399] via-[#a3e635] to-[#fef3c7]',
+    imageSrc: '/images/rolls-2.png',
+  },
+  {
+    id: 'california',
+    name: 'Калифорния',
+    category: 'Роллы',
+    ingredients: 'Снежный краб, авокадо, огурец, тобико, рис',
+    price: 590,
+    grams: 260,
+    color: 'from-[#fb923c] via-[#fdba74] to-[#ffedd5]',
+    imageSrc: '/images/rolls-3.png',
+  },
+  {
+    id: 'salmon-maki',
+    name: 'Сяке маки',
+    category: 'Роллы',
+    ingredients: 'Лосось, рис, нори',
+    price: 420,
+    grams: 180,
+    color: 'from-[#fb7185] via-[#fda4af] to-[#ffe4e6]',
+    imageSrc: '/images/rolls-4.png',
+  },
+  {
+    id: 'ebi-roll',
+    name: 'Эби ролл',
+    category: 'Роллы',
+    ingredients: 'Креветка, сливочный сыр, огурец, рис, нори',
+    price: 610,
+    grams: 255,
+    color: 'from-[#38bdf8] via-[#bae6fd] to-[#f0f9ff]',
+    imageSrc: '/images/rolls-5.png',
+  },
+  {
+    id: 'baked-salmon',
+    name: 'Запеченный лосось',
+    category: 'Роллы',
+    ingredients: 'Лосось, сырный соус, рис, нори, кунжут',
+    price: 620,
+    grams: 300,
+    color: 'from-[#dc2626] via-[#fb923c] to-[#fde68a]',
+    imageSrc: '/images/rolls-6.png',
   },
   {
     id: 'unagi',
@@ -92,24 +155,77 @@ const dishes: Dish[] = [
     price: 540,
     grams: 220,
     color: 'from-[#1f2937] via-[#64748b] to-[#cbd5e1]',
+    imageSrc: '/images/sushi-1.png',
   },
   {
-    id: 'baked-salmon',
-    name: 'Запеченный лосось',
-    category: 'Запеченные',
-    ingredients: 'Лосось, сырный соус, рис, нори, кунжут',
-    price: 620,
-    grams: 300,
-    color: 'from-[#dc2626] via-[#fb923c] to-[#fde68a]',
+    id: 'salmon-sushi',
+    name: 'Суши лосось',
+    category: 'Суши',
+    ingredients: 'Лосось, рис, васаби',
+    price: 190,
+    grams: 48,
+    color: 'from-[#fb7185] via-[#fecdd3] to-[#fff1f2]',
+    imageSrc: '/images/sushi-2.png',
   },
   {
-    id: 'mango-tea',
-    name: 'Манго чай',
-    category: 'Напитки',
-    ingredients: 'Черный чай, манго, лимон, лед',
-    price: 220,
-    grams: 400,
-    color: 'from-[#facc15] via-[#fb923c] to-[#fdba74]',
+    id: 'ebi-sushi',
+    name: 'Суши креветка',
+    category: 'Суши',
+    ingredients: 'Креветка, рис, нори',
+    price: 180,
+    grams: 45,
+    color: 'from-[#f97316] via-[#fed7aa] to-[#fff7ed]',
+    imageSrc: '/images/sushi-3.png',
+  },
+  {
+    id: 'tuna-sushi',
+    name: 'Суши тунец',
+    category: 'Суши',
+    ingredients: 'Тунец, рис, васаби',
+    price: 210,
+    grams: 48,
+    color: 'from-[#ef4444] via-[#fca5a5] to-[#fee2e2]',
+    imageSrc: '/images/sushi-4.png',
+  },
+  {
+    id: 'pepperoni',
+    name: 'Пепперони',
+    category: 'Пицца',
+    ingredients: 'Пепперони, моцарелла, томатный соус',
+    price: 790,
+    grams: 520,
+    color: 'from-[#dc2626] via-[#fb923c] to-[#ffedd5]',
+    imageSrc: '/images/pizza-1.png',
+  },
+  {
+    id: 'cheese-pizza',
+    name: 'Сырная пицца',
+    category: 'Пицца',
+    ingredients: 'Моцарелла, гауда, пармезан, сливочный соус',
+    price: 690,
+    grams: 500,
+    color: 'from-[#facc15] via-[#fde68a] to-[#fff7ed]',
+    imageSrc: '/images/pizza-2.png',
+  },
+  {
+    id: 'chicken-pizza',
+    name: 'Куриная пицца',
+    category: 'Пицца',
+    ingredients: 'Курица, шампиньоны, моцарелла, томатный соус',
+    price: 760,
+    grams: 540,
+    color: 'from-[#fb923c] via-[#fdba74] to-[#fff7ed]',
+    imageSrc: '/images/pizza-3.png',
+  },
+  {
+    id: 'fries',
+    name: 'Картофель фри',
+    category: 'Закуски',
+    ingredients: 'Хрустящий картофель, соль, соус на выбор',
+    price: 240,
+    grams: 160,
+    color: 'from-[#facc15] via-[#fde68a] to-[#fff7ed]',
+    imageSrc: '/images/fries.png',
   },
 ];
 
@@ -344,7 +460,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="space-y-3 px-4 pt-4">
+        <section className="grid grid-cols-2 gap-3 px-4 pt-4">
           {filteredDishes.map((dish) => (
             <DishCard
               key={dish.id}
@@ -437,9 +553,14 @@ export default function Home() {
                   setSearchOpen(false);
                 }}
               >
-                <div
-                  className={`h-14 w-14 shrink-0 rounded-[12px] bg-gradient-to-br ${dish.color}`}
-                />
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[12px] bg-[#fffdf9]">
+                  <Image
+                    src={dish.imageSrc}
+                    alt=""
+                    fill
+                    className="object-contain p-1"
+                  />
+                </div>
                 <div className="min-w-0">
                   <p className="font-semibold">{dish.name}</p>
                   <p className="truncate text-sm text-[#766e63]">
@@ -806,31 +927,30 @@ function YandexMapPicker({
 
 function DishCard({ dish, onAdd }: { dish: Dish; onAdd: () => void }) {
   return (
-    <article className="flex gap-3 rounded-[12px] border border-[#eee5d8] bg-white p-3 shadow-[0_8px_26px_rgba(39,32,20,0.06)]">
-      <div className="relative h-[112px] w-[112px] shrink-0 overflow-hidden rounded-[12px]">
-        <div className={`absolute inset-0 bg-gradient-to-br ${dish.color}`} />
+    <article className="flex min-h-[278px] flex-col rounded-[12px] border border-[#eee5d8] bg-white p-2.5 shadow-[0_8px_26px_rgba(39,32,20,0.06)]">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[12px] bg-[#fff8ef]">
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${dish.color} opacity-18`}
+        />
         <Image
-          src="/images/sushi-hero.png"
-          alt=""
+          src={dish.imageSrc}
+          alt={dish.name}
           fill
-          className="object-cover opacity-35 mix-blend-multiply"
+          className="object-contain p-2.5"
         />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h2 className="truncate text-lg font-semibold">{dish.name}</h2>
-            <p className="text-xs text-[#8a8277]">{dish.grams} г</p>
-          </div>
-          <Badge className="shrink-0 rounded-[8px] bg-[#fff0e8] text-[#b34125]">
-            {dish.category}
-          </Badge>
+      <div className="flex min-w-0 flex-1 flex-col pt-2.5">
+        <div className="min-w-0">
+          <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5">
+            {dish.name}
+          </h2>
+          <p className="mt-0.5 text-xs text-[#8a8277]">{dish.grams} г</p>
         </div>
-        <p className="mt-1 line-clamp-2 text-sm leading-5 text-[#62594f]">
+        <p className="mt-1 line-clamp-2 text-xs leading-4 text-[#62594f]">
           {dish.ingredients}
         </p>
-        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <p className="text-lg font-semibold">{money.format(dish.price)}</p>
+        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+          <p className="text-base font-semibold">{money.format(dish.price)}</p>
           <Button
             size="icon"
             className="h-12 w-12 rounded-[8px] bg-[#e34d2f] font-normal text-white hover:bg-[#ca4025]"
